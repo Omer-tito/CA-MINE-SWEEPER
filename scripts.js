@@ -7,8 +7,8 @@ const EXPLOSION_ICON = '💥'
 
 // LEVEL Difficulty
 var gLevel = {
-    SIZE: 5,
-    MINES: 3
+    SIZE: 6,
+    MINES: 9
 }
 
 // STATE
@@ -44,8 +44,6 @@ function onInitGame() {
 
     // Build Board
     createTable()
-    placeBombs()
-    placeNumbers()
     renderTable()
 }
 
@@ -96,22 +94,25 @@ function renderTable() {
     elTable.innerHTML = strHTML
 }
 
-function placeBombs() {
-    for (let i = 0; i < gBombs; i++) {
+function placeBombs(firstClickI, firstClickJ) {
+    var bombsPlaced = 0
+
+    while (bombsPlaced < gLevel.MINES) {
         var emptyCells = getEmptyCells()
 
-        // If no empty cells left, stop trying to place bombs
+        // Filter out the first clicked cell so a bomb is never placed there
+        emptyCells = emptyCells.filter(cell => cell.i !== firstClickI || cell.j !== firstClickJ)
+
         if (emptyCells.length === 0) break
 
-        var chosenCellPos = emptyCells[getRandomInt(0, emptyCells.length)]
+        var idx = getRandomInt(0, emptyCells.length)
+        var chosenCellPos = emptyCells[idx]
 
         // UPDATE MODEL
         gBoard[chosenCellPos.i][chosenCellPos.j].isMine = true
-
-        // Note: I removed the renderCell here so bombs stay hidden!
+        bombsPlaced++
     }
 }
-
 function placeNumbers() {
     for (var i = 0; i < gLevel.SIZE; i++) {
         for (var j = 0; j < gLevel.SIZE; j++) {
@@ -146,7 +147,7 @@ function getRandomInt(min, max) {
 }
 
 function onClick(i, j) {
-    
+
     // 1. Guard clauses
     if (!gGame.isOn) return
     var currCell = gBoard[i][j]
@@ -158,6 +159,8 @@ function onClick(i, j) {
     } else {
         // START TIMER on first move
         if (gGame.revealedCount === 0 && !gTimerInterval) {
+            placeBombs(i, j)
+            placeNumbers()
             startTimer()
         }
         // Start the expansion (this will handle the reveal of the clicked cell too)
@@ -262,12 +265,12 @@ function checkWin() {
 
 function gameOver(isWon) {
     if (isWon) {
-            document.querySelector('.game-over-modal h2').innerText = 
+        document.querySelector('.game-over-modal h2').innerText =
             'YOU ARE VICTORIOUS!'
-        } else {
-            gGame.isOn = false
-            revealAllBombs()
-            document.querySelector('.game-over-modal h2').innerText = 
+    } else {
+        gGame.isOn = false
+        revealAllBombs()
+        document.querySelector('.game-over-modal h2').innerText =
             'You Went KaBoom.... '
     }
     document.querySelector('.game-over-modal').classList.toggle('hidden')
@@ -338,7 +341,7 @@ function stopTimer() {
     gTimerInterval = null
 }
 
-function resetGame(){
+function resetGame() {
     document.querySelector('.game-over-modal').classList.toggle('hidden')
     onInitGame()
 }
