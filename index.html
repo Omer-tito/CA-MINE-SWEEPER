@@ -10,17 +10,26 @@
 </head>
 
 <body onload="onInitGame()" onkeydown="handleKey(event)">
-    <h1>💥 Welcome to Mine Sweeper! 💥</h1>
+    <h1>💥 CA - Mine Sweeper! 💥</h1>
 
     <div class="game-container">
 
         <div class="status-bar">
             <h2 class="score">Score: <span class="score-number">0</span></h2>
-            <h2 class="lives">Lives: <span class="lives-count">1</span></h2>
+            <h2 class="lives">Lives: <span class="lives-count">0</span></h2>
             <h2 class="timer">Time: <span class="seconds">0</span>s</h2>
         </div>
 
-        <table class="game-table"></table>
+        <table class="game-table"> </table>
+
+        <div class="game-over-modal hidden" >
+            <h2 class="game-over-title">
+                
+            </h2>
+            <p>The game is officialy over!</p>
+            <button onclick="resetGame()">Restart?</button>
+            
+        </div>
     </div>
 
     <footer>

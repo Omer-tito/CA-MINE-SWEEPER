@@ -7,14 +7,14 @@ const EXPLOSION_ICON = '💥'
 
 // LEVEL Difficulty
 var gLevel = {
-    SIZE: 8,
-    MINES: 6
+    SIZE: 5,
+    MINES: 3
 }
 
 // STATE
 var gTimerInterval
 var gBoard = []
-var gLives = 1
+var gLives = 0
 var gBombs = gLevel.MINES
 
 var gGame = {
@@ -24,16 +24,18 @@ var gGame = {
     secsPassed: 0
 }
 
+// Reset Game State
 function onInitGame() {
-    // Reset Game State
-    stopTimer() // Stop any previous timer
+    // Stop any previous timer
+    stopTimer()
     gGame.secsPassed = 0
     const elSeconds = document.querySelector('.seconds')
     if (elSeconds) elSeconds.innerText = 0
+
     gGame.isOn = true
     gGame.revealedCount = 0
     gGame.markedCount = 0
-    gLives = 1
+    gLives = 3
     gBombs = gLevel.MINES
 
     // Update UI Lives
@@ -144,6 +146,7 @@ function getRandomInt(min, max) {
 }
 
 function onClick(i, j) {
+    
     // 1. Guard clauses
     if (!gGame.isOn) return
     var currCell = gBoard[i][j]
@@ -210,15 +213,12 @@ function handleBomb(i, j) {
     if (elLives) elLives.innerText = gLives
 
     if (gLives === 0) {
-        gGame.isOn = false
+        gameOver(false)
         stopTimer()
         renderCell({ i, j }, EXPLOSION_ICON)
-        revealAllBombs()
-        console.log('Game Over!')
     } else {
         renderCell({ i, j }, EXPLOSION_ICON)
         const elCell = document.querySelector('.' + getClassName({ i, j }))
-        elCell.style.backgroundColor = 'red'
     }
 }
 
@@ -227,7 +227,7 @@ function revealAllBombs() {
     for (var i = 0; i < gLevel.SIZE; i++) {
         for (var j = 0; j < gLevel.SIZE; j++) {
             // CHANGE THIS LINE:
-            if (gBoard[i][j].isMine) {
+            if (gBoard[i][j].isMine && !gBoard[i][j].isRevealed) {
                 renderCell({ i, j }, BOMB_ICON)
             }
         }
@@ -255,10 +255,23 @@ function checkWin() {
     if (correctlyMarkedCount === gLevel.MINES) {
         gGame.isOn = false
         stopTimer()
-        console.log('VICTORY! All mines flagged and board cleared.')
+        gameOver(true)
     }
 }
 
+
+function gameOver(isWon) {
+    if (isWon) {
+            document.querySelector('.game-over-modal h2').innerText = 
+            'YOU ARE VICTORIOUS!'
+        } else {
+            gGame.isOn = false
+            revealAllBombs()
+            document.querySelector('.game-over-modal h2').innerText = 
+            'You Went KaBoom.... '
+    }
+    document.querySelector('.game-over-modal').classList.toggle('hidden')
+}
 
 function expandReveal(cellI, cellJ) {
     var currCell = gBoard[cellI][cellJ]
@@ -323,4 +336,9 @@ function startTimer() {
 function stopTimer() {
     clearInterval(gTimerInterval)
     gTimerInterval = null
+}
+
+function resetGame(){
+    document.querySelector('.game-over-modal').classList.toggle('hidden')
+    onInitGame()
 }
