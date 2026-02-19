@@ -18,6 +18,7 @@ var gLives = 0
 var gBombs = gLevel.MINES
 var gClueActive = false
 var gLastClueBtn = null
+var gHistory
 
 var gGame = {
     isOn: true,
@@ -34,6 +35,7 @@ function onInitGame() {
     const elSeconds = document.querySelector('.seconds')
     if (elSeconds) elSeconds.innerText = 0
 
+    gHistory = []
     gGame.isOn = true
     gGame.revealedCount = 0
     gGame.markedCount = 0
@@ -152,9 +154,11 @@ function onClick(i, j) {
         revealHint(i, j)
         return // Stop regular click logic
     }
-
+    
+    
     // Action: Mine vs Safe Space
     if (currCell.isMine) {
+        saveHistory()
         handleBomb(i, j)
     } else {
         // START TIMER on first move
@@ -163,8 +167,10 @@ function onClick(i, j) {
             placeNumbers()
             startTimer()
             renderClueButtons()
+            saveHistory()
         }
         // Start the expansion (this will handle the reveal of the clicked cell too)
+        saveHistory()
         expandReveal(i, j)
         checkWin()
     }
@@ -187,6 +193,7 @@ function onRightClick(ev, i, j) {
     var currCell = gBoard[i][j]
 
     if (currCell.isRevealed || !gGame.isOn) return
+    saveHistory()
 
     // Toggle
     currCell.isMarked = !currCell.isMarked
@@ -256,7 +263,7 @@ function checkWin() {
 
 function gameOver(isWon) {
     const elModal = document.querySelector('.game-over-modal')
-    const elTitle = document.querySelector('.game-over-title') 
+    const elTitle = document.querySelector('.game-over-title')
 
     if (isWon) {
         elTitle.innerText = 'YOU ARE VICTORIOUS!'
@@ -267,7 +274,7 @@ function gameOver(isWon) {
         elTitle.innerText = 'You Went KaBoom....'
         document.querySelector('.status-button-smiley').innerText = '🤯'
     }
-    
+
     elModal.classList.remove('hidden')
     stopTimer()
 }
@@ -344,14 +351,14 @@ function renderClueButtons() {
 
 function activateClue(elClue) {
     if (!gGame.isOn || gClueActive) return;
-    
+
     // Visual feedback that a hint is "primed"
     elClue.classList.add('hint-active');
-    elClue.innerText = '🧐'; 
+    elClue.innerText = '🧐';
     gClueActive = true;
-    
+
     // Store the element so we can remove it after use
-    gLastClueBtn = elClue; 
+    gLastClueBtn = elClue;
 }
 
 function revealHint(cellI, cellJ) {
@@ -381,13 +388,13 @@ function revealHint(cellI, cellJ) {
 function visualReveal(i, j) {
     const currCell = gBoard[i][j]
     const elCell = document.querySelector('.' + getClassName({ i, j }))
-    
+
     elCell.classList.add('revealed-hint') // Use a specific class for hints
-    
+
     let value = ''
     if (currCell.isMine) value = BOMB_ICON
     else value = (currCell.minesAroundCount > 0) ? currCell.minesAroundCount : ''
-    
+
     elCell.innerHTML = value
 }
 
@@ -397,3 +404,78 @@ function visualHide(i, j) {
     elCell.innerHTML = ''
 }
 
+function undo() {
+    if (gHistory.length === 0) return
+
+    const prevState = gHistory.pop()
+
+    // Restore Model
+    gBoard = prevState.board
+    gGame.revealedCount = prevState.revealedCount
+    gGame.markedCount = prevState.markedCount
+    gLives = prevState.lives
+    gGame.isOn = prevState.isOn
+
+    // Restore Clue State
+    gClueActive = prevState.gClueActive
+
+    // Restore UI
+    document.querySelector('.lives-count').innerText = gLives
+    document.querySelector('.hint-container').innerHTML = prevState.hintsHTML // Restores the bulbs
+
+    // Restore Smiley
+    const elSmiley = document.querySelector('.status-button-smiley')
+    if (gLives === 3) elSmiley.innerText = '😊'
+    else if (gLives > 0) elSmiley.innerText = '🤕'
+    else elSmiley.innerText = '🤯'
+
+    document.querySelector('.game-over-modal').classList.add('hidden')
+    renderUndoedBoard()
+}
+
+// Special render function for Undo to update DOM classes
+function renderUndoedBoard() {
+    for (let i = 0; i < gLevel.SIZE; i++) {
+        for (let j = 0; j < gLevel.SIZE; j++) {
+            const cell = gBoard[i][j]
+            const elCell = document.querySelector(`.cell-${i}-${j}`)
+
+            // Sync classes
+            if (cell.isRevealed) {
+                elCell.classList.add('revealed')
+                let value = (cell.minesAroundCount > 0) ? cell.minesAroundCount : ''
+                elCell.innerText = value
+                if (value) elCell.style.color = getNumberColor(cell.minesAroundCount)
+            } else {
+                elCell.classList.remove('revealed')
+                elCell.innerText = cell.isMarked ? FLAG_ICON : ''
+            }
+        }
+    }
+}
+
+function saveHistory() {
+    const snapshot = {
+        board: JSON.parse(JSON.stringify(gBoard)),
+        revealedCount: gGame.revealedCount,
+        markedCount: gGame.markedCount,
+        lives: gLives,
+        isOn: gGame.isOn,
+        // Add these:
+        hintsHTML: document.querySelector('.hint-container').innerHTML,
+        gClueActive: gClueActive
+    }
+    gHistory.push(snapshot)
+}
+
+function updateUndoButton() {
+    const elUndoBtn = document.querySelector('.undo-button');
+    // Disable if no moves have been made yet
+    if (gHistory.length === 0) {
+        elUndoBtn.disabled = true;
+        elUndoBtn.classList.add('disabled');
+    } else {
+        elUndoBtn.disabled = false;
+        elUndoBtn.classList.remove('disabled');
+    }
+}

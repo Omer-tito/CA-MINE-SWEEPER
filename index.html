@@ -2,7 +2,8 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8"
+    
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sweep'em</title>
     <link rel="stylesheet" href="styles.css">
@@ -13,16 +14,19 @@
     <h1>💥 CA - Mine Sweeper! 💥</h1>
 
     <div class="game-container">
-        
-        
+
         <div class="dashboard">
+            <h3 class="lives">LIVES <span class="lives-count">0</span></h3>
             <div class="stats-group">
-                <button class="status-button-smiley" onclick="resetGame(true)">😊</button>
+                <button class="status-button-smiley" onclick="resetGame(true)"></button>
                 <div class="hint-container"></div>
+                <button class="undo-button" onclick="undo()">
+                    Undo
+                    ↩
+                </button>
+                <h3 class="timer">Time: <span class="seconds">0</span>s</h3>
             </div>
         </div>
-        <h2 class="lives">Lives: <span class="lives-count">0</span></h2>
-        <h2 class="timer">Time: <span class="seconds">0</span>s</h2>
 
         <table class="game-table"> </table>
         <div class="game-over-modal hidden">
