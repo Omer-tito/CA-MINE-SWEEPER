@@ -409,12 +409,21 @@ function undo() {
 
     const prevState = gHistory.pop()
 
+
+
     // Restore Model
     gBoard = prevState.board
     gGame.revealedCount = prevState.revealedCount
     gGame.markedCount = prevState.markedCount
     gLives = prevState.lives
     gGame.isOn = prevState.isOn
+
+    // If Un-do-ed too far back restore all
+    if (gHistory.length === 0) {
+        stopTimer()
+        gTimerInterval = null 
+        gGame.revealedCount = 0
+    }
 
     // Restore Clue State
     gClueActive = prevState.gClueActive
